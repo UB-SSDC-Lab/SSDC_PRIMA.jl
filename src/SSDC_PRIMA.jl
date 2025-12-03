@@ -1,16 +1,13 @@
-module PRIMA
+module SSDC_PRIMA
 
-using PRIMA_jll
-const libprimac = PRIMA_jll.libprimac
+using SSDC_PRIMA_jll
+const libprimac = SSDC_PRIMA_jll.libprimac
 include("wrappers.jl")
 
 export bobyqa, cobyla, lincoa, newuoa, prima, uobyqa, issuccess
 
 using TypeUtils
 using LinearAlgebra
-
-isdefined(Base, :get_extension) || using Requires
-
 
 #------------------------------------------------------------------------------
 # PUBLIC INTERFACE
@@ -944,20 +941,6 @@ function _get_scaling(scl::AbstractVector{<:Real}, n::Int)
     all(x -> isfinite(x) & (x > zero(x)), scl) || throw(ArgumentError(
         "scaling factor(s) must be finite and positive"))
     return convert(Vector{Cdouble}, scl)
-end
-
-for func in (:uobyqa, :newuoa, :bobyqa, :lincoa, :cobyla, :prima)
-    @eval $(Symbol(func,"_CUTEst"))(args...; kwds...) =
-        error("invalid arguments or `CUTEst` package not yet loaded")
-end
-
-function __init__()
-    @static if !isdefined(Base, :get_extension)
-        @require CUTEst = "1b53aba6-35b6-5f92-a507-53c67d53f819" include(
-            "../ext/PRIMACUTEstExt.jl")
-        @require NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6" include(
-            "../ext/PRIMANLPModelsExt.jl")
-    end
 end
 
 end # module

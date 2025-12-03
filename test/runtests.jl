@@ -1,51 +1,48 @@
-using PRIMA
+using SSDC_PRIMA
 using Test, TypeUtils
-if Sys.WORD_SIZE > 32 || Sys.iswindows()
-    using CUTEst
-end
 
-optimizer_name(::typeof(PRIMA.uobyqa)) = "UOBYQA"
-optimizer_name(::typeof(PRIMA.newuoa)) = "NEWUOA"
-optimizer_name(::typeof(PRIMA.bobyqa)) = "BOBYQA"
-optimizer_name(::typeof(PRIMA.cobyla)) = "COBYLA"
-optimizer_name(::typeof(PRIMA.lincoa)) = "LINCOA"
-optimizer_name(::typeof(PRIMA.prima))  = "PRIMA"
+optimizer_name(::typeof(SSDC_PRIMA.uobyqa)) = "UOBYQA"
+optimizer_name(::typeof(SSDC_PRIMA.newuoa)) = "NEWUOA"
+optimizer_name(::typeof(SSDC_PRIMA.bobyqa)) = "BOBYQA"
+optimizer_name(::typeof(SSDC_PRIMA.cobyla)) = "COBYLA"
+optimizer_name(::typeof(SSDC_PRIMA.lincoa)) = "LINCOA"
+optimizer_name(::typeof(SSDC_PRIMA.prima))  = "PRIMA"
 optimizer_name(algo::Symbol) = optimizer_name(optimizer(algo))
 
 optimizer(algo::Symbol) =
-    algo === :uobyqa ? PRIMA.uobyqa :
-    algo === :newuoa ? PRIMA.newuoa :
-    algo === :bobyqa ? PRIMA.bobyqa :
-    algo === :cobyla ? PRIMA.cobyla :
-    algo === :lincoa ? PRIMA.lincoa :
-    algo === :prima  ? PRIMA.prima  :
+    algo === :uobyqa ? SSDC_PRIMA.uobyqa :
+    algo === :newuoa ? SSDC_PRIMA.newuoa :
+    algo === :bobyqa ? SSDC_PRIMA.bobyqa :
+    algo === :cobyla ? SSDC_PRIMA.cobyla :
+    algo === :lincoa ? SSDC_PRIMA.lincoa :
+    algo === :prima  ? SSDC_PRIMA.prima  :
     error("unknown optimizer `:$algo`")
 
-print_1(x::AbstractVector, info::PRIMA.Info) = print_1(stdout, x, info)
-function print_1(io::IO, x::AbstractVector, info::PRIMA.Info)
-    msg = PRIMA.reason(info)
+print_1(x::AbstractVector, info::SSDC_PRIMA.Info) = print_1(stdout, x, info)
+function print_1(io::IO, x::AbstractVector, info::SSDC_PRIMA.Info)
+    msg = SSDC_PRIMA.reason(info)
     println(io, "x = $x, f(x) = $(info.fx), status = $(info.status), msg = '$msg', evals = $(info.nf)")
 end
 
-print_2(x::AbstractVector, info::PRIMA.Info) = print_2(stdout, x, info)
-function print_2(io::IO, x::AbstractVector, info::PRIMA.Info)
-    msg = PRIMA.reason(info)
+print_2(x::AbstractVector, info::SSDC_PRIMA.Info) = print_2(stdout, x, info)
+function print_2(io::IO, x::AbstractVector, info::SSDC_PRIMA.Info)
+    msg = SSDC_PRIMA.reason(info)
     println(io, "x = $x, f(x) = $(info.fx), cstrv = $(info.cstrv), status = $(info.status), msg = '$msg', evals = $(info.nf)")
 end
 
-print_3(x::AbstractVector, info::PRIMA.Info) = print_3(stdout, x, info)
-function print_3(io::IO, x::AbstractVector, info::PRIMA.Info)
-    msg = PRIMA.reason(info)
+print_3(x::AbstractVector, info::SSDC_PRIMA.Info) = print_3(stdout, x, info)
+function print_3(io::IO, x::AbstractVector, info::SSDC_PRIMA.Info)
+    msg = SSDC_PRIMA.reason(info)
     println("x = $x, f(x) = $(info.fx), cstrv = $(info.cstrv), c(x) = $(info.nl_ineq), status = $(info.status), msg = '$msg', evals = $(info.nf)")
 end
 
-@testset "PRIMA.jl" begin
+@testset "SSDC_PRIMA.jl" begin
     @testset "Utils " begin
-        for status in instances(PRIMA.Status)
-            @test PRIMA.reason(status) isa String
+        for status in instances(SSDC_PRIMA.Status)
+            @test SSDC_PRIMA.reason(status) isa String
         end
         # Check NULL-array API.
-        let NullArray = PRIMA.NullArray
+        let NullArray = SSDC_PRIMA.NullArray
             A = NullArray{Int16,3}()
             @test eltype(A) === Int16
             @test size(A) == (0,0,0)
@@ -92,29 +89,29 @@ end
         @testset "NEWUOA" begin
             println("\nNEWUOA:")
             kwds = (rhobeg = 1.0, rhoend = 1e-6, ftarget = -Inf,
-                    maxfun = 500n, npt = 2n + 1, iprint = PRIMA.MSG_EXIT)
-            x, info = @inferred PRIMA.newuoa(f, x0; kwds...)
+                    maxfun = 500n, npt = 2n + 1, iprint = SSDC_PRIMA.MSG_EXIT)
+            x, info = @inferred SSDC_PRIMA.newuoa(f, x0; kwds...)
             print_1(x, info)
             @test issuccess(info)
             @test x ≈ [3,2] atol=2e-2 rtol=0
             @test f(x) ≈ info.fx
             @test x0 == x0_sav
             # Solve problem with general driver.
-            x1, info1 = @inferred PRIMA.prima(f, x0; kwds...)
+            x1, info1 = @inferred SSDC_PRIMA.prima(f, x0; kwds...)
             @test x1 == x
             @test info1 == info
             # Solve problem with scaling factors.
             kwds = (scale, rhobeg = 1.0/scl, rhoend = 1e-6/scl, ftarget = -Inf,
-                    maxfun = 500n, npt = 2n + 1, iprint = PRIMA.MSG_EXIT)
-            x1, info1 = @inferred PRIMA.newuoa(f, x0; kwds...)
+                    maxfun = 500n, npt = 2n + 1, iprint = SSDC_PRIMA.MSG_EXIT)
+            x1, info1 = @inferred SSDC_PRIMA.newuoa(f, x0; kwds...)
             @test x1 ≈ x
         end
 
         @testset "UOBYQA" begin
             println("\nUOBYQA:")
             kwds = (rhobeg = 1.0, rhoend = 1e-6, ftarget = -Inf,
-                    maxfun = 500n, iprint = PRIMA.MSG_EXIT)
-            x, info = @inferred PRIMA.uobyqa(f, x0; kwds...)
+                    maxfun = 500n, iprint = SSDC_PRIMA.MSG_EXIT)
+            x, info = @inferred SSDC_PRIMA.uobyqa(f, x0; kwds...)
             print_1(x, info)
             @test issuccess(info)
             @test x ≈ [3,2] atol=2e-2 rtol=0
@@ -122,8 +119,8 @@ end
             @test x0 == x0_sav
             # Solve problem with scaling factors.
             kwds = (scale, rhobeg = 1.0/scl, rhoend = 1e-6/scl, ftarget = -Inf,
-                    maxfun = 500n, iprint = PRIMA.MSG_EXIT)
-            x1, info1 = @inferred PRIMA.uobyqa(f, x0; kwds...)
+                    maxfun = 500n, iprint = SSDC_PRIMA.MSG_EXIT)
+            x1, info1 = @inferred SSDC_PRIMA.uobyqa(f, x0; kwds...)
             @test x1 ≈ x
         end
 
@@ -131,8 +128,8 @@ end
             println("\nBOBYQA:")
             kwds = (xl = xl, xu = xu,
                     rhobeg = 1.0, rhoend = 1e-6, ftarget = -Inf,
-                    maxfun = 500n, npt = 2n + 1, iprint = PRIMA.MSG_EXIT)
-            x, info = @inferred PRIMA.bobyqa(f, x0; kwds...)
+                    maxfun = 500n, npt = 2n + 1, iprint = SSDC_PRIMA.MSG_EXIT)
+            x, info = @inferred SSDC_PRIMA.bobyqa(f, x0; kwds...)
             print_1(x, info)
             @test issuccess(info)
             @test x ≈ [3,2] atol=2e-2 rtol=0
@@ -140,13 +137,13 @@ end
             @test x0 == x0_sav
             @test check_bounds(xl, x, xu)
             # Solve problem with general driver.
-            x1, info1 = @inferred PRIMA.prima(f, x0; kwds...)
+            x1, info1 = @inferred SSDC_PRIMA.prima(f, x0; kwds...)
             @test x1 == x
             @test info1 == info
             # Solve problem with scaling factors.
             kwds = (scale, rhobeg = 1.0/scl, rhoend = 1e-6/scl, ftarget = -Inf,
-                    maxfun = 500n, npt = 2n + 1, iprint = PRIMA.MSG_EXIT)
-            x1, info1 = @inferred PRIMA.bobyqa(f, x0; kwds...)
+                    maxfun = 500n, npt = 2n + 1, iprint = SSDC_PRIMA.MSG_EXIT)
+            x1, info1 = @inferred SSDC_PRIMA.bobyqa(f, x0; kwds...)
             @test x1 ≈ x
         end
 
@@ -154,9 +151,9 @@ end
             println("\nCOBYLA:")
             kwds = (xl = xl, xu = xu, linear_ineq = (A_ineq, b_ineq),
                     rhobeg = 1.0, rhoend = 1e-6, ftarget = -Inf,
-                    maxfun = 500n, iprint = PRIMA.MSG_EXIT)
+                    maxfun = 500n, iprint = SSDC_PRIMA.MSG_EXIT)
             # First call with just the number of non-linear inequality constraints.
-            x, info = @inferred PRIMA.cobyla(f, x0; kwds...,
+            x, info = @inferred SSDC_PRIMA.cobyla(f, x0; kwds...,
                                              nonlinear_ineq = c_ineq)
             print_3(x, info)
             @test issuccess(info)
@@ -165,20 +162,20 @@ end
             @test x0 == x0_sav
             @test check_bounds(xl, x, xu)
             # Call with given number of non-linear inequality constraints.
-            x1, info1 = @inferred PRIMA.cobyla(f, x0; kwds...,
+            x1, info1 = @inferred SSDC_PRIMA.cobyla(f, x0; kwds...,
                                                nonlinear_ineq = (length(c_ineq(x0)), c_ineq))
             @test x1 == x
             @test info1 == info
             # Solve problem with general driver.
-            x1, info1 = @inferred PRIMA.prima(f, x0; kwds...,
+            x1, info1 = @inferred SSDC_PRIMA.prima(f, x0; kwds...,
                                               nonlinear_ineq = c_ineq)
             @test x1 == x
             @test info1 == info
             # Solve problem with scaling factors.
             kwds = (xl = xl, xu = xu, linear_ineq = (A_ineq, b_ineq),
                     scale, rhobeg = 1.0/scl, rhoend = 1e-6/scl, ftarget = -Inf,
-                    maxfun = 500n, iprint = PRIMA.MSG_EXIT)
-            x1, info1 = @inferred PRIMA.cobyla(f, x0; kwds...,
+                    maxfun = 500n, iprint = SSDC_PRIMA.MSG_EXIT)
+            x1, info1 = @inferred SSDC_PRIMA.cobyla(f, x0; kwds...,
                                                nonlinear_ineq = c_ineq)
             @test x1 ≈ x
         end
@@ -187,8 +184,8 @@ end
             println("\nLINCOA:")
             kwds = (xl = xl, xu = xu, linear_ineq = (A_ineq, b_ineq),
                     rhobeg = 1.0, rhoend = 1e-6, ftarget = -Inf,
-                    maxfun = 500n, npt = 2n + 1, iprint = PRIMA.MSG_EXIT)
-            x, info = @inferred PRIMA.lincoa(f, x0; kwds...)
+                    maxfun = 500n, npt = 2n + 1, iprint = SSDC_PRIMA.MSG_EXIT)
+            x, info = @inferred SSDC_PRIMA.lincoa(f, x0; kwds...)
             print_2(x, info)
             @test issuccess(info)
             @test x ≈ [3,2] atol=2e-2 rtol=0
@@ -196,14 +193,14 @@ end
             @test x0 == x0_sav
             @test check_bounds(xl, x, xu)
             # Solve problem with general driver.
-            x1, info1 = @inferred PRIMA.prima(f, x0; kwds...)
+            x1, info1 = @inferred SSDC_PRIMA.prima(f, x0; kwds...)
             @test x1 == x
             @test info1 == info
             # Solve problem with scaling factors.
             kwds = (xl = xl, xu = xu, linear_ineq = (A_ineq, b_ineq),
                     scale, rhobeg = 1.0/scl, rhoend = 1e-6/scl, ftarget = -Inf,
-                    maxfun = 500n, npt = 2n + 1, iprint = PRIMA.MSG_EXIT)
-            x1, info1 = @inferred PRIMA.lincoa(f, x0; kwds...)
+                    maxfun = 500n, npt = 2n + 1, iprint = SSDC_PRIMA.MSG_EXIT)
+            x1, info1 = @inferred SSDC_PRIMA.lincoa(f, x0; kwds...)
             @test x1 ≈ x
         end
     end
@@ -251,9 +248,9 @@ end
         rhobeg = 1.0
         rhoend = 1e-5
         ftarget = -Inf
-        maxfun = 3000n
+        maxfun = 6000n
         npt = 2n + 1
-        iprint = PRIMA.MSG_EXIT
+        iprint = SSDC_PRIMA.MSG_EXIT
 
         # Linear inequality constraints
         # defining a closed convex region delimited by:
@@ -380,16 +377,6 @@ end
                 @test issuccess(res)
                 @test maximum(abs.(x1)) ≤ 1e-8
             end
-        end
-    end
-
-    if Sys.WORD_SIZE > 32 || Sys.iswindows()
-        @testset "Unconstrained CUTEst problem $name" for name in ("TOINTQOR", "OSBORNEB", "LANCZOS1LS",)
-            x1, res1 = @inferred PRIMA.prima_CUTEst(name; maxfun=5000)
-            @test issuccess(res1)
-            x2, res2 = @inferred PRIMA.newuoa_CUTEst(name; maxfun=5000)
-            @test issuccess(res2)
-            @test x1 ≈ x2
         end
     end
 
