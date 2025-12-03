@@ -9,9 +9,6 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SSDC_PRIMA_jll = "8e902b83-7c50-5151-970b-bd6ceca8bed7"
 TypeUtils = "c3b1956e-8857-4d84-9b79-890df85b1e67"
 
-[sources]
-SSDC_PRIMA_jll = {path = "/Users/granthec/.julia/dev/SSDC_PRIMA_jll"}
-
 [compat]
 Requires = "1"
 SSDC_PRIMA_jll = "0.7.2"
